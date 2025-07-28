@@ -1,0 +1,6 @@
+--find-links https://download.pytorch.org/whl/torch_stable.html
+PyMuPDF
+sentence-transformers
+nltk
+torch==2.2.0+cpu
+scikit-learn
