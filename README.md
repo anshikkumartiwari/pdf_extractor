@@ -1,181 +1,211 @@
+# 🧠 Document Section Extractor and Relevance Scorer
 
-# Document Section Extractor and Relevance Scorer
+A powerful, fully offline tool that **extracts sections from PDF documents** and ranks them by **relevance to a specific task or job role**. Ideal for resume screening, itinerary generation, educational content parsing, and more.
 
-This project extracts sections from PDF documents and ranks them for relevance to a specified job role (e.g., _"Travel Planner planning a 4-day trip for 10 college friends"_) using semantic embeddings and TF-IDF scoring.
-
-✅ **Offline execution** | 💻 **CPU-only** | 🧠 **Model size ≤ 1GB** | ⚡ **<60s for 3–5 PDFs**
+> 📍 Built with semantic embeddings, ONNX optimization, and TF-IDF scoring for precision and speed.
 
 ---
 
 ## 🚀 Features
 
-- **PDF Section Extraction**: Detects headings using:
-  - Bold/italic font styles
-  - Vertical spacing (>30 units)
-  - 2–15 word titles (excluding dates)
-- **Relevance Scoring**:
-  - Semantic embeddings via `all-mpnet-base-v2` (ONNX, 0.85 weight)
-  - TF-IDF scoring (0.15 weight)
-  - TF-IDF-weighted keyword boosting for job alignment
-- **Clean Output**:
-  - JSON output (`output.json`) with ranked sections & relevant paragraphs
-  - No extra formatting (e.g., bullets, newlines)
+👉 **Offline execution**
+👉 **CPU-only inference** (ONNX)
+👉 **Model size ≤ 500MB**
+👉 **< 60 seconds** for 3–5 PDFs
+
+### 🔍 Intelligent Section Extraction
+
+* Headings detected via:
+
+  * **Font style** (bold, italic, oblique)
+  * **Vertical spacing** > 30 units
+  * **Exclusion of dates/months** using regex
+  * **Title-like spans** (2–15 words)
+
+### 🌀 Relevance Ranking
+
+* **Semantic Embeddings**: `all-mpnet-base-v2` via ONNX
+* **TF-IDF Boosting** for keyword alignment
+* **Combined scoring**: `0.8 * Embedding Score + 0.2 * TF-IDF + Keyword Boost`
+
+### 📼 Output Format
+
+* JSON with:
+
+  * Ranked sections
+  * Key paragraph highlights
+  * Metadata (timestamp, persona, documents)
 
 ---
 
-## 📦 Prerequisites
+## 🧠 Core Techniques & Methodology (From Source Code)
 
-- **Docker** (for containerized execution)
-- **Python** 3.9+ (handled inside Docker)
-- **Input Files**:
-  - `input.json`: Includes persona, job-to-be-done, and list of PDFs
-  - PDFs: Must be **text-based**, not scanned images
+### 🔖 PDF Section Extraction
 
-### ✅ Example `input.json`
+* PyMuPDF used to extract structured blocks/spans
+* Blocks filtered based on vertical layout, spacing, and styling
+* Removes common pitfalls (dates, months, too short titles)
+* Sections extracted as spans between detected headings
 
-json
-{
-  "persona": { "role": "Travel Planner" },
-  "job_to_be_done": { "task": "Plan a trip of 4 days for a group of 10 college friends." },
-  "documents": [
-    { "filename": "South of France - Cities.pdf" }
-  ]
-}
-`
+### 🧬 Text Cleaning
 
----
+* Bullet and newline normalization
+* Removal of excessive whitespace and formatting
 
-## ⚙ Setup Instructions
+### 📊 Semantic Relevance Scoring
 
-### 1. Clone the Repository
+* Embedding model: `all-mpnet-base-v2`
+* Embeddings generated for:
 
-bash
-git clone https://github.com/your-username/document-section-extractor.git
-cd document-section-extractor
+  * Persona + job context
+  * Section content (title + top 1000 chars)
+* Cosine similarity used for semantic matching (via `sentence-transformers` + `torch`)
 
+### 🔢 TF-IDF Analysis
 
-### 2. Prepare Input Files
+* TF-IDF vectorizer built on:
 
-* Place `input.json` and all PDF files into the `app/` directory.
+  * Persona + job text
+  * All section texts
+* Cosine similarity computed using `scikit-learn`
 
-### 3. Build Docker Image
+### ✨ Keyword Boosting
 
-bash
-docker build -t document-analyzer .
+* Keywords extracted from persona/job using regex
+* Boost added to score for keyword presence in each section
 
+### 📃 Paragraph-Level Analysis
 
-### 4. Run the Container
-
-bash
-docker run --rm -v $(pwd)/app:/app document-analyzer
-
-
-* Output will be in: `app/output.json`
-* No internet required after setup
+* Top-ranked sections split into paragraphs
+* Paragraphs scored semantically against persona-job
+* Top 2 paragraphs extracted as refined summaries
 
 ---
 
-## 🔄 Model Conversion (One-Time)
+## 🛠️ Tools & Technologies Used
 
-Convert `all-mpnet-base-v2` to ONNX using `optimum`:
-
-bash
-pip install optimum
-python script.py
-
-
-* Copy the generated `model_onnx/` folder into `app/`
+| Category          | Tool / Library                                |
+| ----------------- | --------------------------------------------- |
+| 👾 Embeddings     | `sentence-transformers`, ONNX                 |
+| 🔢 Vector Search  | `TF-IDF`, `cosine_similarity`, `scikit-learn` |
+| 📄 PDF Parsing    | `PyMuPDF` (fitz)                              |
+| 🔎 NLP Utils      | `nltk`, custom regex, text cleanup            |
+| 🏗️ Model Serving | Docker, Python 3.9-slim image                 |
 
 ---
 
-## 📁 Project Structure
+## 📅 Folder Structure
 
-
-.
-├── script.py                # Main script
-├── requirements.txt         # Python dependencies
-├── Dockerfile               # Build instructions
-├── approach_explanation.md  # Technical details
+```
+pdf_extractor/
 ├── app/
 │   ├── input.json
-│   ├── *.pdf                # Input PDFs
-│   ├── model_onnx/          # Converted ONNX model
-│   └── output.json          # Result file
-
-
----
-
-## 🐳 Dockerfile
-
-Dockerfile
-FROM python:3.9-slim
-
-RUN apt-get update && apt-get install -y \
-    libmupdf-dev \
-    libfreetype6-dev \
-    pkg-config \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-RUN python -m nltk.downloader punkt
-
-COPY script.py .
-COPY input.json .
-COPY model_onnx/ /app/model_onnx/
-
-CMD ["python", "script.py"]
-
-
----
-
-## 📦 requirements.txt
-
-txt
-PyMuPDF==1.23.26
-sentence-transformers==2.7.0
-nltk==3.8.1
-onnxruntime==1.17.1
-numpy==1.26.4
-scikit-learn==1.4.1.post1
-optimum==1.17.1
+│   ├── *.pdf
+│   ├── model_onnx/
+│   └── output.json
+├── script.py
+├── requirements.txt
+├── Dockerfile
+├── approach_explanation.md
+└── my-extractor-image.tar
 ```
 
 ---
 
-## 🧠 Methodology
+## 🚪 Input Format
 
-See approach_explanation.md for details on:
-
-* Heading detection via font & spacing
-* Semantic scoring using ONNX
-* Keyword boosting based on job relevance
-* Optimization techniques for speed and memory
-
----
-
-## 🛠 Troubleshooting
-
-| Issue                     | Solution                                                                                              |
-| ------------------------- | ----------------------------------------------------------------------------------------------------- |
-| *No sections extracted* | Verify PDF is text-based using:<br>python -c "import fitz; print(fitz.open('file.pdf').get_text())" |
-| *Model errors*          | Ensure model_onnx/ exists in app/                                                                 |
-| *Slow processing*       | Reduce max_length in encoding; Limit extracted sections                                             |
+```json
+{
+  "persona": {
+    "role": "Travel Planner"
+  },
+  "job_to_be_done": {
+    "task": "Plan a trip of 4 days for a group of 10 college friends."
+  },
+  "documents": [
+    { "filename": "South of France - Cities.pdf" }
+  ]
+}
+```
 
 ---
 
-## ⚙ Constraints
+## 🛠️ How to Run
 
-* ✅ CPU-only (ONNX for fast inference)
-* ✅ Model size < 1GB (~420MB)
-* ✅ Processing time < 60s for 3–5 documents
-* ✅ Fully offline after setup
+### Option 1: 🔧 Build from Source
+
+```bash
+git clone https://github.com/your-username/document-section-extractor.git
+cd document-section-extractor
+docker build -t document-analyzer .
+docker run --rm -v "$(pwd)/app:/app" document-analyzer
+```
+
+### Option 2: 🚚 Pull Prebuilt Image from Docker Hub
+
+```bash
+docker pull yashsharma00777/pdf-extractor:latest
+docker run --rm -v "$(pwd)/app:/app" yashsharma00777/pdf-extractor
+```
+
+> 📊 **Why use DockerHub image?**
+>
+> * Saves build time
+> * Works on any Docker-enabled system
+> * Preloaded model & dependencies
+
+---
+
+## 🔎 Sample Output (`output.json`)
+
+```json
+{
+  "metadata": { ... },
+  "extracted_sections": [
+    {
+      "document": "South of France - Cities.pdf",
+      "section_title": "Day 2: Exploring Nice",
+      "importance_rank": 1,
+      "page_number": 3
+    },
+    ...
+  ],
+  "subsection_analysis": [
+    {
+      "refined_text": "The old town of Nice offers local food tours...",
+      "page_number": 3
+    }
+  ]
+}
+```
+
+---
+
+## 🛠️ Troubleshooting
+
+| Issue                 | Fix                                                                      |
+| --------------------- | ------------------------------------------------------------------------ |
+| No sections extracted | Make sure the PDF is text-based. Try: `fitz.open('file.pdf').get_text()` |
+| Output is empty       | Check `input.json` structure and filenames                               |
+| Model not found       | Confirm `model_onnx/` is present in `app/`                               |
+| Slow processing       | Limit PDF count or shorten section length for inference                  |
+
+---
+
+## 🏆 Why It Stands Out
+
+* ✅ **Smart heading detection** with spacing, font, and date filtering
+* ✅ **Semantic + TF-IDF scoring hybrid**
+* ✅ **Keyword-aware boosting logic**
+* ✅ **Fully offline**, fast, and deployable
+* ✅ **Lightweight Docker image** with only what’s necessary
 
 ---
 
 ## 📄 License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE) for full details.
+
+---
+
+> Built with ❤️ to understand documents the way humans do.
