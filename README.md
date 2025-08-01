@@ -137,7 +137,7 @@ document-analyzer/
 #### 🚚 Pull Prebuilt Image from Docker Hub
 
 ```bash
-docker pull yashsharma00777/pdf-extractor:latest
+docker pull yashsharma00777/document-analyzer:latest
 docker run --rm -v "$(pwd)/app:/app" yashsharma00777/document-analyzer
 ```
 
