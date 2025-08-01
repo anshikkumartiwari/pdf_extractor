@@ -138,7 +138,7 @@ document-analyzer/
 
 ```bash
 docker pull yashsharma00777/pdf-extractor:latest
-docker run --rm -v "$(pwd)/app:/app" yashsharma00777/pdf-extractor
+docker run --rm -v "$(pwd)/app:/app" yashsharma00777/document-analyzer
 ```
 
 > 📊 **Why use DockerHub image?**
