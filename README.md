@@ -97,7 +97,7 @@ A powerful, fully offline tool that **extracts sections from PDF documents** and
 ## 📅 Folder Structure
 
 ```
-pdf_extractor/
+document-analyzer/
 ├── app/
 │   ├── input.json
 │   ├── *.pdf
@@ -132,16 +132,9 @@ pdf_extractor/
 
 ## 🛠️ How to Run
 
-### Option 1: 🔧 Build from Source
 
-```bash
-git clone https://github.com/your-username/document-section-extractor.git
-cd document-section-extractor
-docker build -t document-analyzer .
-docker run --rm -v "$(pwd)/app:/app" document-analyzer
-```
 
-### Option 2: 🚚 Pull Prebuilt Image from Docker Hub
+#### 🚚 Pull Prebuilt Image from Docker Hub
 
 ```bash
 docker pull yashsharma00777/pdf-extractor:latest
