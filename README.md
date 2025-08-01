@@ -1,4 +1,4 @@
-# 🧠 Document Section Extractor and Relevance Scorer
+# 🧠 Document Analyzer and Relevance Scorer
 
 A powerful, fully offline tool that **extracts sections from PDF documents** and ranks them by **relevance to a specific task or job role**. Ideal for resume screening, itinerary generation, educational content parsing, and more.
 
